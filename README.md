@@ -1,4 +1,8 @@
-# Document File Parser Suite
+# webFileViewer <a href="https://github.com/daromaj/webFileViewer" target="_blank"><img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" width="24" height="24"></a>
+
+## Live Demo
+
+You can try the live version of the tool here: [https://daromaj.github.io/webFileViewer/](https://daromaj.github.io/webFileViewer/)
 
 ## Overview
 This project provides three client-side HTML-based parsers for handling document files directly in the browser without server interaction:
