@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ODT Parser</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>ODT File Parser</h2>
+        <p>Extracts text content from OpenDocument Text files.</p>
+        <input type="file" id="fileInput" accept=".odt" />
+        <pre id="output" style="white-space: pre-wrap;"></pre>
+        <div id="embeddedFiles"></div>
+        <a href="index.html" class="home-link">Back to Home</a>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const arrayBuffer = reader.result;
+                const zip = new JSZip();
+                zip.loadAsync(arrayBuffer).then(function(content) {
+                    const contentXmlFile = content.file('content.xml');
+                    if (!contentXmlFile) {
+                        document.getElementById('output').textContent = 'Error: content.xml not found in ODT file.';
+                        return;
+                    }
+
+                    contentXmlFile.async('string').then(function(xmlString) {
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+                        
+                        // Extract text from all <text:p> elements
+                        let extractedText = '';
+                        const paragraphs = xmlDoc.getElementsByTagName('text:p');
+                        for (let i = 0; i < paragraphs.length; i++) {
+                            extractedText += paragraphs[i].textContent + '\n';
+                        }
+                        document.getElementById('output').textContent = extractedText;
+
+                        // Extract embedded files
+                        const embeddedFiles = [];
+                        for (const [name, file] of Object.entries(content.files)) {
+                            if (name.includes('ObjectReplacements/')) {
+                                embeddedFiles.push(file);
+                            }
+                        }
+
+                        // Create download links
+                        const container = document.getElementById('embeddedFiles');
+                        container.innerHTML = '';
+                        if (embeddedFiles.length > 0) {
+                            container.innerHTML = '<h3>Embedded Files:</h3>';
+                            embeddedFiles.forEach(function(file) {
+                                content.files[file.name].async('blob').then(function(blob) {
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = file.name.split('/').pop();
+                                    link.textContent = 'Download ' + link.download;
+                                    container.appendChild(link);
+                                    container.appendChild(document.createElement('br'));
+                                });
+                            });
+                        }
+
+                    }).catch(function(error) {
+                        document.getElementById('output').textContent = 'Error reading content.xml: ' + error.message;
+                    });
+                }).catch(function(error) {
+                    document.getElementById('output').textContent = 'Error parsing ODT file: ' + error.message;
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>

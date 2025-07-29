@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PST Parser</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@calvin-coomer/pst-parser@0.0.7/dist/pst-parser.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>PST File Parser</h2>
+        <p>Extracts information from Outlook PST files.</p>
+        <input type="file" id="fileInput" accept=".pst" />
+        <pre id="output" style="white-space: pre-wrap;"></pre>
+        <a href="index.html" class="home-link">Back to Home</a>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const arrayBuffer = reader.result;
+                try {
+                    const pstFile = new PSTFile(arrayBuffer);
+                    let outputText = 'PST File Information:\n';
+                    outputText += '\nNumber of Folders: ' + pstFile.folderCount;
+                    outputText += '\nNumber of Messages: ' + pstFile.messageCount;
+                    
+                    // You can add more detailed parsing here based on PSTFile API
+                    // For example, iterating through folders and messages
+
+                    document.getElementById('output').textContent = outputText;
+                } catch (error) {
+                    document.getElementById('output').textContent = 'Error parsing PST file: ' + error.message;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EML Parser</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@vortiq/eml-parse-js@0.0.5/dist/index.umd.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>EML File Parser</h2>
+        <p>Extracts information from EML email files.</p>
+        <input type="file" id="fileInput" accept=".eml" />
+        <pre id="output" style="white-space: pre-wrap;"></pre>
+        <a href="index.html" class="home-link">Back to Home</a>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const emlString = reader.result;
+                try {
+                    const parsedEml = emlParseJs.parseEml(emlString);
+                    const emailObject = emlParseJs.readEml(parsedEml);
+
+                    let outputText = 'EML File Information:\n';
+                    outputText += '\nSubject: ' + (emailObject.subject || 'N/A');
+                    outputText += '\nFrom: ' + (emailObject.from && emailObject.from[0] ? emailObject.from[0].address : 'N/A');
+                    outputText += '\nTo: ' + (emailObject.to && emailObject.to[0] ? emailObject.to[0].address : 'N/A');
+                    outputText += '\n\nBody:\n' + (emailObject.text || emailObject.html || 'N/A');
+
+                    if (emailObject.attachments && emailObject.attachments.length > 0) {
+                        const attachmentsDiv = document.createElement('div');
+                        attachmentsDiv.innerHTML = '<h3>Attachments:</h3>';
+                        emailObject.attachments.forEach(attachment => {
+                            const link = document.createElement('a');
+                            link.href = '#';
+                            link.textContent = attachment.filename + ' (' + attachment.contentType + ')';
+                            link.style.display = 'block';
+                            link.style.marginBottom = '5px';
+                            link.addEventListener('click', function(event) {
+                                event.preventDefault();
+                                const blob = new Blob([attachment.content], { type: attachment.contentType });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = attachment.filename;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            });
+                            attachmentsDiv.appendChild(link);
+                        });
+                        document.getElementById('output').appendChild(attachmentsDiv);
+                    }
+                } catch (error) {
+                    document.getElementById('output').textContent = 'Error parsing EML file: ' + error.message;
+                }
+            };
+            reader.readAsText(file); // Read as text for EML
+        });
+    </script>
+</body>
+</html>

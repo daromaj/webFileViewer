@@ -10,7 +10,7 @@
         <h2>ZIP Archive Parser</h2>
         <p>Extracts and lists contents of ZIP archives.</p>
         <input type="file" id="fileInput" accept=".zip" />
-        <pre id="output" style="white-space: pre-wrap;"></pre>
+        <div id="output"></div>
         <a href="index.html" class="home-link">Back to Home</a>
     </div>
 
@@ -24,11 +24,37 @@
                 const arrayBuffer = reader.result;
                 const zip = new JSZip();
                 zip.loadAsync(arrayBuffer).then(function(content) {
-                    let outputText = 'Contents of ' + file.name + ':\n\n';
+                    const outputDiv = document.getElementById('output');
+                    outputDiv.innerHTML = ''; // Clear previous output
+
+                    const fileList = document.createElement('ul');
+                    outputDiv.appendChild(fileList);
+
                     content.forEach(function (relativePath, zipEntry) {
-                        outputText += (zipEntry.dir ? 'Directory: ' : 'File: ') + relativePath + '\n';
+                        const listItem = document.createElement('li');
+                        if (zipEntry.dir) {
+                            listItem.textContent = 'Directory: ' + relativePath;
+                        } else {
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = '#'; // Placeholder
+                            downloadLink.textContent = relativePath;
+                            downloadLink.addEventListener('click', function(event) {
+                                event.preventDefault();
+                                zipEntry.async('blob').then(function (blob) {
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = relativePath.split('/').pop();
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                });
+                            });
+                            listItem.appendChild(downloadLink);
+                        }
+                        fileList.appendChild(listItem);
                     });
-                    document.getElementById('output').textContent = outputText;
                 }).catch(function(error) {
                     document.getElementById('output').textContent = 'Error parsing ZIP file: ' + error.message;
                 });

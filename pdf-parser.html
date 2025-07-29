@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Parser</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/pdfjs-dist@5.4.54/build/pdf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>PDF File Parser</h2>
+        <p>Extracts text content from PDF files.</p>
+        <input type="file" id="fileInput" accept=".pdf" />
+        <pre id="output" style="white-space: pre-wrap;"></pre>
+        <a href="index.html" class="home-link">Back to Home</a>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@5.4.54/build/pdf.worker.min.js';
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const arrayBuffer = reader.result;
+                
+                pdfjsLib.getDocument(arrayBuffer).promise.then(function(pdf) {
+                    let fullText = '';
+                    const numPages = pdf.numPages;
+                    let pagesProcessed = 0;
+
+                    for (let i = 1; i <= numPages; i++) {
+                        pdf.getPage(i).then(function(page) {
+                            page.getTextContent().then(function(textContent) {
+                                textContent.items.forEach(function(textItem) {
+                                    fullText += textItem.str + ' ';
+                                });
+                                pagesProcessed++;
+                                if (pagesProcessed === numPages) {
+                                    document.getElementById('output').textContent = fullText;
+                                }
+                            });
+                        });
+                    }
+                }).catch(function(error) {
+                    document.getElementById('output').textContent = 'Error parsing PDF file: ' + error.message;
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>

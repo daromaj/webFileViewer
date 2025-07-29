@@ -63,19 +63,19 @@ All parsers support file processing entirely in the browser with capabilities fo
 - Embedded file downloads require explicit user action
 
 ## Future Enhancements
-- [ ] **PPTX (PowerPoint Presentations)**
+- [x] **PPTX (PowerPoint Presentations)**
   - Similar ZIP-based structure to DOCX/XLSX
   - Embedded files in `ppt/embeddings/` path
   - Could use same libraries (jszip + pptxtemplater)
-- [ ] **ODT/ODS/ODP (OpenDocument Formats)**
+- [x] **ODT/ODS/ODP (OpenDocument Formats)**
   - ZIP containers with XML content
   - Embedded files in `ObjectReplacements/` directory
   - Could leverage jszip for extraction
-- [ ] **PDF (Portable Document Format)**
+- [x] **PDF (Portable Document Format)**
   - Embedded files in `/EmbeddedFiles` dictionary
   - PDF.js could be extended for extraction
   - More complex due to PDF's binary structure
-- [ ] **PST (Outlook Data Files)**
+- [x] **PST (Outlook Data Files)**
   - Hierarchical database format
   - Requires library like `pstsdk` or `node-pst`
   - More complex implementation needed
@@ -83,7 +83,7 @@ All parsers support file processing entirely in the browser with capabilities fo
   - ✅ Native support via jszip
   - Could add UI for file extraction
   - Simple implementation possible
-- [ ] **EML (Email Message)**
+- [x] **EML (Email Message)**
   - Plain text format with MIME sections
   - Could parse attachments from MIME parts
   - Simpler than MSG format
