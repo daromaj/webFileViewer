@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DOCX Parser</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://unpkg.com/docxtemplater@3.65.2/build/docxtemplater.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>DOCX File Parser</h2>
+        <p>Supports files up to browser memory limits (typically under 1GB recommended)</p>
+        <input type="file" id="fileInput" accept=".docx" />
+        <pre id="output" style="white-space: pre-wrap;"></pre>
+        <div id="embeddedFiles"></div>
+        <a href="index.html" class="home-link">Back to Home</a>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function() {
+                const arrayBuffer = reader.result;
+                
+                // Extract text content
+                const zip = new JSZip();
+                zip.loadAsync(arrayBuffer).then(function(content) {
+                    const doc = new window.docxtemplater();
+                    doc.loadZip(content);
+                    doc.setData({}); // Empty data to trigger extraction
+                    try {
+                        doc.render();
+                    } catch (error) {
+                        // Ignore rendering errors
+                    }
+                    
+                    // Extract text
+                    const text = doc.getFullText();
+                    document.getElementById('output').textContent = text;
+                    
+                    // Extract embedded files
+                    const embeddedFiles = [];
+                    for (const [name, file] of Object.entries(zip.files)) {
+                        if (name.includes('word/embeddings/')) {
+                            embeddedFiles.push(file);
+                        }
+                    }
+                    
+                    // Create download links
+                    const container = document.getElementById('embeddedFiles');
+                    container.innerHTML = '';
+                    if (embeddedFiles.length > 0) {
+                        container.innerHTML = '<h3>Embedded Files:</h3>';
+                        embeddedFiles.forEach(function(file) {
+                            zip.files[file.name].async('blob').then(function(content) {
+                                const url = URL.createObjectURL(content);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = file.name.split('/').pop();
+                                link.textContent = 'Download ' + link.download;
+                                container.appendChild(link);
+                                container.appendChild(document.createElement('br'));
+                            });
+                        });
+                    }
+                });
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>

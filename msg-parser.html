@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MSG Email Parser</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/@kenjiuno/msgreader@1.23.0/dist/msgreader.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>MSG Email Parser</h2>
+        <p>Preview email contents and save attachments locally (supports files up to browser memory limits)</p>
+        <input type="file" id="fileInput" accept=".msg" />
+        
+        <div id="emailContent" class="email-header"></div>
+        <div id="attachments" class="attachments"></div>
+        <a href="index.html" class="home-link">Back to Home</a>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function() {
+                try {
+                    // Parse MSG file
+                    const msg = new MsgReader(reader.result);
+                    const emailData = msg.getFileData();
+                    
+                    // Display email content
+                    const contentDiv = document.getElementById('emailContent');
+                    contentDiv.innerHTML = `
+                        <h3>${emailData.subject}</h3>
+                        <p><strong>From:</strong> ${emailData.sender}</p>
+                        <p><strong>To:</strong> ${emailData.receivers.join(', ')}</p>
+                        <p><strong>Date:</strong> ${new Date(emailData.clientSubmitTime).toLocaleString()}</p>
+                        <hr>
+                        <div>${emailData.body}</div>
+                    `;
+                    
+                    // Display attachments
+                    const attachmentsDiv = document.getElementById('attachments');
+                    attachmentsDiv.innerHTML = '';
+                    
+                    if (emailData.attachments && emailData.attachments.length > 0) {
+                        attachmentsDiv.innerHTML = '<h3>Attachments:</h3>';
+                        emailData.attachments.forEach(attachment => {
+                            if (attachment.type === 'file') {
+                                const blob = new Blob([attachment.data], {type: 'application/octet-stream'});
+                                const url = URL.createObjectURL(blob);
+                                
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = attachment.fileName;
+                                link.textContent = `Download ${attachment.fileName}`;
+                                link.style.display = 'block';
+                                link.style.marginBottom = '10px';
+                                
+                                attachmentsDiv.appendChild(link);
+                            }
+                        });
+                    } else {
+                        attachmentsDiv.innerHTML = '<p>No attachments found</p>';
+                    }
+                } catch (error) {
+                    document.getElementById('emailContent').innerHTML = `<p style="color:red;">Error parsing file: ${error.message}</p>`;
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
+</body>
+</html>
